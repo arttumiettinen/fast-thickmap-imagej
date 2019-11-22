@@ -10,10 +10,7 @@ public class ImageI64 extends ImageBase {
 	public ImageI64(Vec3c dimensions) {
 		super(dimensions);
 		
-		slices = new long[depth()][];
-		for (int z = 0; z < depth(); z++) {
-			slices[z] = new long[width() * height()];
-		}
+		slices = new long[depth()][width() * height()];
 	}
 	
 	/**
