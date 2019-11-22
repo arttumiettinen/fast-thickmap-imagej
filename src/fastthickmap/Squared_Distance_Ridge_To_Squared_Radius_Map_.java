@@ -176,8 +176,16 @@ public class Squared_Distance_Ridge_To_Squared_Radius_Map_ implements PlugInFilt
 			return data[(int) pos.z][(int) (pos.y * width() + pos.x)];
 		}
 		
+		public int[] get(int x, int y, int z) {
+			return data[z][y * width() + x];
+		}
+		
 		public void set(Vec3c pos, int[] items) {
 			data[(int) pos.z][(int) (pos.y * width() + pos.x)] = items;
+		}
+		
+		public void set(int x, int y, int z, int[] items) {
+			data[z][y * width() + x] = items;
 		}
 	}
 
@@ -482,16 +490,22 @@ public class Squared_Distance_Ridge_To_Squared_Radius_Map_ implements PlugInFilt
 	private static void prepareSuper(Image centers2, RiImage ri, Box bounds) {
 		if (centers2.getDimensions().max() >= Short.MAX_VALUE)
 			throw new IllegalArgumentException("Linear image size exceeds " + Short.MAX_VALUE
-					+ " pixels. This algorithm is not configured for that big images.");
+					+ " pixels. This implementation is not configured for that big images.");
 
+		int bx = (int)bounds.pos.x;
+		int by = (int)bounds.pos.y;
+		int bz = (int)bounds.pos.z;
+		
 		for (int z = 0; z < ri.depth(); z++) {
 			for (int y = 0; y < ri.height(); y++) {
 				for (int x = 0; x < ri.width(); x++) {
-					Vec3c p = new Vec3c(x, y, z);
-					float R2 = centers2.get(bounds.pos.add(p));
+					//Vec3c p = new Vec3c(x, y, z);
+					//float R2 = centers2.get(bounds.pos.add(p));
+					float R2 = centers2.get(bx + x, by + y, bz + z);
+					
 					if (R2 > 0) {
-						//ri.get(p).add(new RiStorageItem((short) (x + bounds.pos.x), (short) (y + bounds.pos.y)));
-						ri.set(p, new int[] { makeRiStorageItem((short) (x + bounds.pos.x), (short) (y + bounds.pos.y))} );
+						//ri.set(p, new int[] { makeRiStorageItem((short) (x + bounds.pos.x), (short) (y + bounds.pos.y))} );
+						ri.set(x, y, z, new int[] { makeRiStorageItem((short) (x + bounds.pos.x), (short) (y + bounds.pos.y))} );
 					}
 				}
 			}
@@ -675,8 +689,18 @@ public class Squared_Distance_Ridge_To_Squared_Radius_Map_ implements PlugInFilt
 
 		RiImage ri = new RiImage(dmap2.getDimensions());
 		Box fullBox = new Box(new Vec3c(0, 0, 0), dmap2.getDimensions());
+		
+		StopWatch t = new StopWatch();
+		t.start();
+		
 		prepareSuper(dmap2, ri, fullBox);
+		
+		IJ.log("prepareSuper: " + t.stop() + " ms");
+		t.start();
+		
 		ImageUtilities.setValue(tmap2, 0);
+		
+		IJ.log("setValue: " + t.stop() + " ms");
 
 		for (int n = 0; n < dmap2.getDimensionality(); n++)
 			processDimensionSuper(ri, n, dmap2, tmap2, fullBox,
@@ -1010,11 +1034,11 @@ public class Squared_Distance_Ridge_To_Squared_Radius_Map_ implements PlugInFilt
 		Vec3c subDivisions = new Vec3c(1, 1, 1);
 		Vec3c blockSize = dmap2.getDimensions();
 		int distributionDirection = getDistributionDirection(dim);
-		//while (getMemoryRequirement(blockSize, meanr) >= IJ.maxMemory()) {
+		while (getMemoryRequirement(blockSize, meanr) >= IJ.maxMemory()) {
 			subDivisions.inc(distributionDirection);
 			blockSize = dmap2.getDimensions().divc(subDivisions).add(new Vec3c(1, 1, 1));
 			MathUtils.clamp(blockSize, new Vec3c(0, 0, 0), dmap2.getDimensions());
-		//}
+		}
 
 		return blockSize;
 	}

@@ -13,7 +13,7 @@ public class ImageUtilities {
 		for (int z = 0; z < img.depth(); z++) {
 			for (int y = 0; y < img.height(); y++) {
 				for (int x = 0; x < img.width(); x++) {
-					float p = img.get(new Vec3c(x, y, z));
+					float p = img.get(x, y, z);
 					if(p > M)
 						M = p;
 				}
@@ -32,7 +32,7 @@ public class ImageUtilities {
 		for (int z = 0; z < img.depth(); z++) {
 			for (int y = 0; y < img.height(); y++) {
 				for (int x = 0; x < img.width(); x++) {
-					img.set(new Vec3c(x, y, z), val);
+					img.set(x, y, z, val);
 				}
 			}
 		}

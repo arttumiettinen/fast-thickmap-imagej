@@ -80,6 +80,10 @@ public class Image extends ImageBase {
 	{
 		return slices[(int)pos.z][(int)(pos.y * width() + pos.x)];
 	}
+	
+	public float get(int x, int y, int z) {
+		return slices[z][y * width() + x];
+	}
 
 	/**
 	 * Sets value of pixel.
@@ -91,6 +95,10 @@ public class Image extends ImageBase {
 	public void set(Vec3c pos, float value)
 	{
 		slices[(int)pos.z][(int)(pos.y * width() + pos.x)] = value;
+	}
+	
+	public void set(int x, int y, int z, float value) {
+		slices[z][y * width() + x] = value;
 	}
 
 }
