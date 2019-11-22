@@ -878,21 +878,23 @@ public class Squared_Distance_Ridge_To_Squared_Radius_Map_ implements PlugInFilt
 						setBlockAndStart(blockIndex, startIndex, index, pos);
 
 						int[] s = ri.get(pos);
-
+						
 						// Write size
-						short val = (short) s.length;
-						out.writeShort(val);
+						short count = s != null ? (short) s.length : 0;
+						out.writeShort(count);
 
-						// Write items
-						for (int m = 0; m < s.length; m++) {
-							val = getSrcX(s[m]);
-							out.writeShort(val);
-
-							val = getSrcY(s[m]);
-							out.writeShort(val);
+						if(count > 0) {
+							// Write items
+							for (int m = 0; m < s.length; m++) {
+								short val = getSrcX(s[m]);
+								out.writeShort(val);
+	
+								val = getSrcY(s[m]);
+								out.writeShort(val);
+							}
 						}
 
-						startIndex += 2 * s.length + 1;
+						startIndex += 2 * count + 1;
 					}
 				}
 			}
@@ -939,6 +941,7 @@ public class Squared_Distance_Ridge_To_Squared_Radius_Map_ implements PlugInFilt
 							short srcY = dat.readShort((startIndex + 1) + 2 * i + 1);
 							vals[i] = makeRiStorageItem(srcX, srcY);
 						}
+						ri.set(pos, vals);
 					}
 				}
 
@@ -1007,11 +1010,11 @@ public class Squared_Distance_Ridge_To_Squared_Radius_Map_ implements PlugInFilt
 		Vec3c subDivisions = new Vec3c(1, 1, 1);
 		Vec3c blockSize = dmap2.getDimensions();
 		int distributionDirection = getDistributionDirection(dim);
-		while (getMemoryRequirement(blockSize, meanr) >= IJ.maxMemory()) {
+		//while (getMemoryRequirement(blockSize, meanr) >= IJ.maxMemory()) {
 			subDivisions.inc(distributionDirection);
 			blockSize = dmap2.getDimensions().divc(subDivisions).add(new Vec3c(1, 1, 1));
 			MathUtils.clamp(blockSize, new Vec3c(0, 0, 0), dmap2.getDimensions());
-		}
+		//}
 
 		return blockSize;
 	}
