@@ -271,6 +271,16 @@ public class Squared_Distance_Ridge_To_Squared_Radius_Map_ implements PlugInFilt
 			return -(this.ri2 - b.ri2);
 		}
 	};
+	
+	private static class TempArrays {
+		public ArrayList<ActiveSpheresSuperItem> activeSpheres = new ArrayList<ActiveSpheresSuperItem>(40);
+		public ArrayList<ActiveSpheresSuperItem> activeSpheresTmp = new ArrayList<ActiveSpheresSuperItem>(40);
+		public ArrayList<ActiveSpheresSuperItem> Ctmp = new ArrayList<ActiveSpheresSuperItem>(40);
+		public ArrayList<RiSuperItem> resultTmp = new ArrayList<RiSuperItem>(40);
+		public ArrayList<RiSuperItem> resultTmp2 = new ArrayList<RiSuperItem>(40);
+		
+		public PriorityQueue<ActiveSpheresSuperItem> activeSpheresPrio = new PriorityQueue<ActiveSpheresSuperItem>();
+	}
 
 	/**
 	 * @param centers       Image containing only the row to be processed before
@@ -284,17 +294,23 @@ public class Squared_Distance_Ridge_To_Squared_Radius_Map_ implements PlugInFilt
 	 *                      the row.
 	 */
 	private static void singlePassSuper(ArrayList<ArrayList<RiSuperItem>> centers, ArrayList<ArrayList<RiSuperItem>> ri,
-			int dimensionality, Vec3i dimensions, Vec3i rowStart, int dim, int step) {
-
-		// Stores the spheres that have been encountered and that have not been passed
-		// yet.
+			int dimensionality, Vec3i dimensions, Vec3i rowStart, int dim, int step,
+			TempArrays tempArrays) {
+		
+		// Stores the spheres that have been encountered and that have not been passed yet.
 		// Stores the center point, original radius, and ri.
-		ArrayList<ActiveSpheresSuperItem> activeSpheres = new ArrayList<ActiveSpheresSuperItem>(40);
-		ArrayList<ActiveSpheresSuperItem> activeSpheresTmp = new ArrayList<ActiveSpheresSuperItem>(40);
-		ArrayList<ActiveSpheresSuperItem> Ctmp = new ArrayList<ActiveSpheresSuperItem>(40);
+		ArrayList<ActiveSpheresSuperItem> activeSpheres = tempArrays.activeSpheres;
+		ArrayList<ActiveSpheresSuperItem> activeSpheresTmp = tempArrays.activeSpheresTmp;
+		ArrayList<ActiveSpheresSuperItem> Ctmp = tempArrays.Ctmp;
 
-		ArrayList<RiSuperItem> resultTmp = new ArrayList<RiSuperItem>(40);
-		ArrayList<RiSuperItem> resultTmp2 = new ArrayList<RiSuperItem>(40);
+		ArrayList<RiSuperItem> resultTmp = tempArrays.resultTmp;
+		ArrayList<RiSuperItem> resultTmp2 = tempArrays.resultTmp2;
+		
+		activeSpheres.clear();
+		activeSpheresTmp.clear();
+		Ctmp.clear();
+		resultTmp.clear();
+		resultTmp2.clear();
 
 		// Set start point to the start or to the end of the current row.
 		Vec3i p = new Vec3i(rowStart);
@@ -426,13 +442,15 @@ public class Squared_Distance_Ridge_To_Squared_Radius_Map_ implements PlugInFilt
 	 *                             assume empty list.
 	 */
 	private static void singlePassFinalSuper(ArrayList<ArrayList<RiSuperItem>> centers, Image result, Vec3i rowStart,
-			int dim, int step, Vec3i blockOrigin)
+			int dim, int step, Vec3i blockOrigin,
+			TempArrays tempArrays)
 	{
 
 		// Stores the spheres that have been encountered and that have not been passed
 		// yet.
 		// Stores the sphere with the largest R at the top of the priority queue.
-		PriorityQueue<ActiveSpheresSuperItem> activeSpheres = new PriorityQueue<ActiveSpheresSuperItem>();
+		PriorityQueue<ActiveSpheresSuperItem> activeSpheres = tempArrays.activeSpheresPrio;
+		activeSpheres.clear();
 
 		// Set start point to the start or end of the current row.
 		Vec3i p = new Vec3i(rowStart);
@@ -502,12 +520,9 @@ public class Squared_Distance_Ridge_To_Squared_Radius_Map_ implements PlugInFilt
 		for (int z = 0; z < ri.depth(); z++) {
 			for (int y = 0; y < ri.height(); y++) {
 				for (int x = 0; x < ri.width(); x++) {
-					//Vec3c p = new Vec3c(x, y, z);
-					//float R2 = centers2.get(bounds.pos.add(p));
 					float R2 = centers2.get(bx + x, by + y, bz + z);
 					
 					if (R2 > 0) {
-						//ri.set(p, new int[] { makeRiStorageItem((short) (x + bounds.pos.x), (short) (y + bounds.pos.y))} );
 						ri.set(x, y, z, new int[] { makeRiStorageItem((short) (x + bounds.pos.x), (short) (y + bounds.pos.y))} );
 					}
 				}
@@ -534,7 +549,6 @@ public class Squared_Distance_Ridge_To_Squared_Radius_Map_ implements PlugInFilt
 		short srcY = getSrcY(riStorageItem);
 		
 		// This version reads always from the full image (difference compared to c++ version)
-		//float R2f = dmap2Full.get(new Vec3c(srcX, srcY, p.z + blockPos.z));
 		float R2f = dmap2Full.get(srcX, srcY, p.z + blockPos.z);
 		int R2 = (int) Math.round(R2f);
 		int dx = p.x - (srcX - blockPos.x);
@@ -625,9 +639,15 @@ public class Squared_Distance_Ridge_To_Squared_Radius_Map_ implements PlugInFilt
 				return result;
 			}
 		};
+		
+		ThreadLocal<TempArrays> tempArraysStore = new ThreadLocal<TempArrays>() {
+			@Override
+			protected TempArrays initialValue() {
+				return new TempArrays();
+			}
+		};
 
 		// Determine start points of pixel rows and process each row
-		// for (long n = 0; n < rowCount; n++) {
 		Loop.withIndex(0, rowCount, new Loop.Each() {
 
 			@Override
@@ -635,6 +655,7 @@ public class Squared_Distance_Ridge_To_Squared_Radius_Map_ implements PlugInFilt
 
 				ArrayList<ArrayList<RiSuperItem>> inRow = inRowStore.get();
 				ArrayList<ArrayList<RiSuperItem>> outRow = outRowStore.get();
+				TempArrays tempArrays = tempArraysStore.get();
 
 				Vec3i start = Image.indexToCoords(n, reducedDimensions);
 
@@ -647,18 +668,17 @@ public class Squared_Distance_Ridge_To_Squared_Radius_Map_ implements PlugInFilt
 				}
 
 				if (!isFinalPass) {
-					singlePassSuper(inRow, outRow, dmap2.getDimensionality(), ri.getDimensions(), start, dim, 1);
-					singlePassSuper(inRow, outRow, dmap2.getDimensionality(), ri.getDimensions(), start, dim, -1);
+					singlePassSuper(inRow, outRow, dmap2.getDimensionality(), ri.getDimensions(), start, dim, 1, tempArrays);
+					singlePassSuper(inRow, outRow, dmap2.getDimensionality(), ri.getDimensions(), start, dim, -1, tempArrays);
 
 					// Copy data back to storage
 					pos = start;
 					for (int x = 0; x < ri.getDimension(dim); x++, pos.inc(dim)) {
-						//toStorageSet(outRow.get(x), ri.get(pos));
 						ri.set(pos, toStorageSet(outRow.get(x)));
 					}
 				} else {
-					singlePassFinalSuper(inRow, result, start, dim, 1, blockPos);
-					singlePassFinalSuper(inRow, result, start, dim, -1, blockPos);
+					singlePassFinalSuper(inRow, result, start, dim, 1, blockPos, tempArrays);
+					singlePassFinalSuper(inRow, result, start, dim, -1, blockPos, tempArrays);
 				}
 
 				IJ.showProgress(progress.incrementAndGet(), (int) rowCount);
@@ -671,7 +691,7 @@ public class Squared_Distance_Ridge_To_Squared_Radius_Map_ implements PlugInFilt
 	 * 
 	 * @param dmap2
 	 */
-	private static void buildCircleLookup(Image dmap2) {
+	private static void buildCircleLookup(Image dmap2) throws InterruptedException {
 
 		float M = ImageUtilities.max(dmap2);
 		if (M >= Integer.MAX_VALUE)
@@ -693,22 +713,11 @@ public class Squared_Distance_Ridge_To_Squared_Radius_Map_ implements PlugInFilt
 
 		RiImage ri = new RiImage(dmap2.getDimensions());
 		Box fullBox = new Box(new Vec3i(0, 0, 0), dmap2.getDimensions());
-		
-		StopWatch t = new StopWatch();
-		t.start();
-		
 		prepareSuper(dmap2, ri, fullBox);
-		
-		IJ.log("prepareSuper: " + t.stop() + " ms");
-		t.start();
-		
 		ImageUtilities.setValue(tmap2, 0);
-		
-		IJ.log("setValue: " + t.stop() + " ms");
 
 		for (int n = 0; n < dmap2.getDimensionality(); n++)
-			processDimensionSuper(ri, n, dmap2, tmap2, fullBox,
-					dmap2.getDimensionality());
+			processDimensionSuper(ri, n, dmap2, tmap2, fullBox, dmap2.getDimensionality());
 	}
 
 	/**

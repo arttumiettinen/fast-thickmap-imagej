@@ -27,9 +27,6 @@ public class Squared_Radius_Map_To_Thickness_Map_ implements PlugInFilter {
 				
 				for (int y = 0; y < rmap2.height(); y++) {
 					for (int x = 0; x < rmap2.width(); x++) {
-
-						//Vec3c pos = new Vec3c(x, y, z);
-
 						float r2 = rmap2.get(x, y, z);
 						rmap2.set(x, y, z, (float) (2 * Math.sqrt(r2)));
 					}
