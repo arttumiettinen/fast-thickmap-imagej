@@ -17,13 +17,14 @@ public class Image extends ImageBase {
 	 * @param size
 	 * @return
 	 */
-	public static Vec3c indexToCoords(long ind, Vec3c size)
+	public static Vec3i indexToCoords(long ind, Vec3i size)
 	{
-		int z = (int)(ind / (size.x * size.y));
-		int y = (int)((ind - z * size.x * size.y) / size.x);
-		int x = (int)(ind - z * size.x * size.y - y * size.x);
+		long xy = (long)size.x * (long)size.y;
+		int z = (int)(ind / xy);
+		int y = (int)((ind - z * xy) / size.x);
+		int x = (int)(ind - z * xy - y * size.x);
 
-		return new Vec3c(x, y, z);
+		return new Vec3i(x, y, z);
 	}
 	
 	/**
@@ -55,7 +56,7 @@ public class Image extends ImageBase {
 	 */
 	public Image(ImageStack stack) {
 		
-		super(new Vec3c(stack.getWidth(), stack.getHeight(), stack.getSize()));
+		super(new Vec3i(stack.getWidth(), stack.getHeight(), stack.getSize()));
 		
 		slices = toFloatArray(stack);
 	}
@@ -76,9 +77,9 @@ public class Image extends ImageBase {
 	 * @param pos
 	 * @return
 	 */
-	public float get(Vec3c pos)
+	public float get(Vec3i pos)
 	{
-		return slices[(int)pos.z][(int)(pos.y * width() + pos.x)];
+		return slices[pos.z][pos.y * width() + pos.x];
 	}
 	
 	public float get(int x, int y, int z) {
@@ -92,9 +93,9 @@ public class Image extends ImageBase {
 	 * @param pos
 	 * @param value
 	 */
-	public void set(Vec3c pos, float value)
+	public void set(Vec3i pos, float value)
 	{
-		slices[(int)pos.z][(int)(pos.y * width() + pos.x)] = value;
+		slices[pos.z][pos.y * width() + pos.x] = value;
 	}
 	
 	public void set(int x, int y, int z, float value) {

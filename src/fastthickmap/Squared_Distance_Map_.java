@@ -74,13 +74,13 @@ public class Squared_Distance_Map_ implements PlugInFilter {
 	 * @param g
 	 * @param h
 	 */
-	private static void voronoi(int d, Vec3c idx, Image output, float[] g, float[] h)
+	private static void voronoi(int d, Vec3i idx, Image output, float[] g, float[] h)
 	{
-		long nd = output.getDimensions().get(d);
+		int nd = output.getDimensions().get(d);
 
 		int l = -1;
 
-		for (long i = 0; i < nd; i++)
+		for (int i = 0; i < nd; i++)
 		{
 			idx.set(d, i);
 
@@ -118,7 +118,7 @@ public class Squared_Distance_Map_ implements PlugInFilter {
 
 		l = 0;
 
-		for (long i = 0; i < nd; i++)
+		for (int i = 0; i < nd; i++)
 		{
 			float iw = (float)i;
 
@@ -152,9 +152,9 @@ public class Squared_Distance_Map_ implements PlugInFilter {
 	 */
 	private static void processDimension(Image slices, int dimension) throws InterruptedException {
 		
-		Vec3c reducedDimensions = slices.getDimensions();
+		Vec3i reducedDimensions = slices.getDimensions();
 		reducedDimensions.set(dimension, 1);
-		int rowCount = (int)(reducedDimensions.x * reducedDimensions.y * reducedDimensions.z);
+		int rowCount = (int)((long)reducedDimensions.x * (long)reducedDimensions.y * (long)reducedDimensions.z);
 		
 		int nd = (int)slices.getDimensions().get(dimension);
 		
@@ -180,7 +180,7 @@ public class Squared_Distance_Map_ implements PlugInFilter {
 			@Override
 			public void run(long n) {
 				
-				Vec3c start = Image.indexToCoords(n, reducedDimensions);
+				Vec3i start = Image.indexToCoords(n, reducedDimensions);
 
 			    // Process the current row
 				voronoi(dimension, start, slices, g.get(), h.get());

@@ -167,7 +167,7 @@ public class Vec3 {
         if (o == null || getClass() != o.getClass())
         	return false;
             
-        Vec3c v = (Vec3c)o; 
+        Vec3 v = (Vec3)o; 
             
         final double EPS = 1e-15;
         return Math.abs(x - v.x) < EPS &&

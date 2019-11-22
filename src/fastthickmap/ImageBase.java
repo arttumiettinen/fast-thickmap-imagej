@@ -5,13 +5,13 @@ public abstract class ImageBase {
 	/**
 	 * Stores dimensions of the image.
 	 */
-	private Vec3c dimensions;
+	private Vec3i dimensions;
 	
 	/**
 	 * Constructor
 	 * @param dimensions
 	 */
-	public ImageBase(Vec3c dimensions) {
+	public ImageBase(Vec3i dimensions) {
 		this.dimensions = dimensions;
 	}
 	
@@ -40,8 +40,8 @@ public abstract class ImageBase {
 	 * Gets dimensions of this image.
 	 * @return
 	 */
-	public Vec3c getDimensions() {
-		return new Vec3c(dimensions);
+	public Vec3i getDimensions() {
+		return new Vec3i(dimensions);
 	}
 	
 	/**
@@ -49,7 +49,7 @@ public abstract class ImageBase {
 	 * @return
 	 */
 	public int depth() {
-		return (int)dimensions.z;
+		return dimensions.z;
 	}
 	
 	/**
@@ -57,7 +57,7 @@ public abstract class ImageBase {
 	 * @return
 	 */
 	public int height() {
-		return (int)dimensions.y;
+		return dimensions.y;
 	}
 	
 	/**
@@ -65,7 +65,7 @@ public abstract class ImageBase {
 	 * @return
 	 */
 	public int width() {
-		return (int)dimensions.x;
+		return dimensions.x;
 	}
 	
 	/**
@@ -74,7 +74,7 @@ public abstract class ImageBase {
 	 * @return
 	 */
 	public int getDimension(int dim) {
-		return (int)dimensions.get(dim);
+		return dimensions.get(dim);
 	}
 	
 	/**
@@ -88,7 +88,7 @@ public abstract class ImageBase {
 	/**
 	 * Test whether the given coordinates are inside this image.
 	 */
-	public boolean isInImage(Vec3c pos) {
+	public boolean isInImage(Vec3i pos) {
 		return pos.x >= 0 && pos.y >= 0 && pos.z >= 0 && pos.x < width() && pos.y < height() && pos.z < depth();
 	}
 }

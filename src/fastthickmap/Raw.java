@@ -15,7 +15,7 @@ public class Raw {
 	/**
 	 * Adds .raw image dimensions to file name.
 	 */
-	public static String concatDimensions(String baseName, Vec3c dimensions) {
+	public static String concatDimensions(String baseName, Vec3i dimensions) {
 		String suffix = "_" + dimensions.x + "x" + dimensions.y + "x" + dimensions.z + ".raw";
 
 		if (baseName.toLowerCase(Locale.ROOT).endsWith(suffix.toLowerCase(Locale.ROOT)))
@@ -37,17 +37,17 @@ public class Raw {
 	 *                        starts.
 	 * @param imageDimensions Dimensions of the block of the source image to write.
 	 */
-	public static void writeBlock(ImageI64 img, String filename, Vec3c filePosition, Vec3c fileDimensions,
-			Vec3c imagePosition, Vec3c imageDimensions) throws IOException {
+	public static void writeBlock(ImageI64 img, String filename, Vec3i filePosition, Vec3i fileDimensions,
+			Vec3i imagePosition, Vec3i imageDimensions) throws IOException {
 
-		Vec3c cStart = new Vec3c(filePosition);
-		MathUtils.clamp(cStart, new Vec3c(0, 0, 0), fileDimensions);
-		Vec3c cEnd = filePosition.add(imageDimensions);
-		MathUtils.clamp(cEnd, new Vec3c(0, 0, 0), fileDimensions);
+		Vec3i cStart = new Vec3i(filePosition);
+		MathUtils.clamp(cStart, new Vec3i(0, 0, 0), fileDimensions);
+		Vec3i cEnd = filePosition.add(imageDimensions);
+		MathUtils.clamp(cEnd, new Vec3i(0, 0, 0), fileDimensions);
 
 		if (!img.isInImage(imagePosition))
 			throw new IllegalArgumentException("Block start position must be inside the image.");
-		if (!img.isInImage(imagePosition.add(imageDimensions).sub(new Vec3c(1, 1, 1))))
+		if (!img.isInImage(imagePosition.add(imageDimensions).sub(new Vec3i(1, 1, 1))))
 			throw new IllegalArgumentException("Block end position must be inside the image.");
 
 		FileUtils.createFoldersFor(filename);
@@ -60,7 +60,7 @@ public class Raw {
 		// FileOutputStream(filename))) {
 		try (DiskMappedWriteBuffer out = new DiskMappedWriteBuffer(filename, fileSize)) {
 
-			for (long z = cStart.z; z < cEnd.z; z++) {
+			for (int z = cStart.z; z < cEnd.z; z++) {
 //				if (cStart.x == 0 && cEnd.x == fileDimensions.x)
 //				{
 //					// Writing whole scanlines.
@@ -82,13 +82,14 @@ public class Raw {
 //				{
 //					// Writing partial scanlines.
 //	
-				for (long y = cStart.y; y < cEnd.y; y++) {
-					for (long x = cStart.x; x < cEnd.x; x++) {
+				for (int y = cStart.y; y < cEnd.y; y++) {
+					for (int x = cStart.x; x < cEnd.x; x++) {
 						long index = z * fileDimensions.x * fileDimensions.y + y * fileDimensions.x + x;
 
-						Vec3c imgPos = new Vec3c(x - cStart.x + imagePosition.x, y - cStart.y + imagePosition.y,
-								z - cStart.z + imagePosition.z);
-						out.writeLong(index, img.get(imgPos));
+						//Vec3c imgPos = new Vec3c(x - cStart.x + imagePosition.x, y - cStart.y + imagePosition.y,
+						//		z - cStart.z + imagePosition.z);
+						//out.writeLong(index, img.get(imgPos));
+						out.writeLong(index, img.get(x - cStart.x + imagePosition.x, y - cStart.y + imagePosition.y, z - cStart.z + imagePosition.z));
 					}
 
 //						size_t filePos = (z * fileDimensions.x * fileDimensions.y + y * fileDimensions.x + cStart.x) * sizeof(pixel_t);
@@ -120,9 +121,9 @@ public class Raw {
 	 * @param filePosition  Position in the file to write to.
 	 * @param fileDimension Total dimensions of the output file.
 	 */
-	public static void writeBlock(ImageI64 img, String filename, Vec3c filePosition, Vec3c fileDimensions)
+	public static void writeBlock(ImageI64 img, String filename, Vec3i filePosition, Vec3i fileDimensions)
 			throws IOException {
-		writeBlock(img, filename, filePosition, fileDimensions, new Vec3c(0, 0, 0), img.getDimensions());
+		writeBlock(img, filename, filePosition, fileDimensions, new Vec3i(0, 0, 0), img.getDimensions());
 	}
 
 	/**
@@ -138,17 +139,17 @@ public class Raw {
 	 * @throws IOException
 	 * @throws FileNotFoundException
 	 */
-	public static void readBlockNoParse(ImageI64 img, String filename, Vec3c start, Vec3c dimensions)
+	public static void readBlockNoParse(ImageI64 img, String filename, Vec3i start, Vec3i dimensions)
 			throws FileNotFoundException, IOException {
 
 		if (start.x < 0 || start.y < 0 || start.z < 0 || start.x >= dimensions.x || start.y >= dimensions.y
 				|| start.z >= dimensions.z)
 			throw new IllegalArgumentException("Out of bounds start position in Raw.readBlockNoParse.");
 
-		Vec3c cStart = new Vec3c(start);
-		MathUtils.clamp(cStart, new Vec3c(0, 0, 0), dimensions);
-		Vec3c cEnd = start.add(img.getDimensions());
-		MathUtils.clamp(cEnd, new Vec3c(0, 0, 0), dimensions);
+		Vec3i cStart = new Vec3i(start);
+		MathUtils.clamp(cStart, new Vec3i(0, 0, 0), dimensions);
+		Vec3i cEnd = start.add(img.getDimensions());
+		MathUtils.clamp(cEnd, new Vec3i(0, 0, 0), dimensions);
 
 //		if (cStart.equals(new Vec3c(0, 0, 0)) && cEnd.equals(dimensions))
 //		{
@@ -158,12 +159,12 @@ public class Raw {
 //		}
 
 		try (DiskMappedReadBuffer in = new DiskMappedReadBuffer(filename)) {
-			for (long z = cStart.z; z < cEnd.z; z++) {
-				for (long y = cStart.y; y < cEnd.y; y++) {
-					for (long x = cStart.x; x < cEnd.x; x++) {
-						long index = z * dimensions.x * dimensions.y + y * dimensions.x + x;
-						Vec3c imagePos = new Vec3c(x - cStart.x, y - cStart.y, z - cStart.z);
-						img.set(imagePos, in.readLong(index));
+			for (int z = cStart.z; z < cEnd.z; z++) {
+				for (int y = cStart.y; y < cEnd.y; y++) {
+					for (int x = cStart.x; x < cEnd.x; x++) {
+						long index = (long)z * (long)dimensions.x * (long)dimensions.y + (long)y * (long)dimensions.x + (long)x;
+						//Vec3c imagePos = new Vec3c(x - cStart.x, y - cStart.y, z - cStart.z);
+						img.set(x - cStart.x, y - cStart.y, z - cStart.z, in.readLong(index));
 					}
 				}
 			}

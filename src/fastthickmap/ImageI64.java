@@ -7,7 +7,7 @@ package fastthickmap;
  */
 public class ImageI64 extends ImageBase {
 
-	public ImageI64(Vec3c dimensions) {
+	public ImageI64(Vec3i dimensions) {
 		super(dimensions);
 		
 		slices = new long[depth()][width() * height()];
@@ -25,9 +25,13 @@ public class ImageI64 extends ImageBase {
 	 * @param pos
 	 * @return
 	 */
-	public long get(Vec3c pos)
+	public long get(Vec3i pos)
 	{
-		return slices[(int)pos.z][(int)(pos.y * width() + pos.x)];
+		return slices[pos.z][pos.y * width() + pos.x];
+	}
+	
+	public long get(int x, int y, int z) {
+		return slices[z][y * width() + x];
 	}
 
 	/**
@@ -37,8 +41,12 @@ public class ImageI64 extends ImageBase {
 	 * @param pos
 	 * @param value
 	 */
-	public void set(Vec3c pos, long value)
+	public void set(Vec3i pos, long value)
 	{
-		slices[(int)pos.z][(int)(pos.y * width() + pos.x)] = value;
+		slices[pos.z][pos.y * width() + pos.x] = value;
+	}
+	
+	public void set(int x, int y, int z, long value) {
+		slices[z][y * width() + x] = value;
 	}
 }

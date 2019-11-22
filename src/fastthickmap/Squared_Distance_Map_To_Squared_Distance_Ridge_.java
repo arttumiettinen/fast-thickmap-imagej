@@ -223,36 +223,47 @@ public class Squared_Distance_Map_To_Squared_Distance_Ridge_ implements PlugInFi
 	 * @param nb Neighbourhood pixels are assigned to this image. The size of this
 	 *           image is not checked but it must be 2 * nbRadius + 1.
 	 */
-	private static void getNeighbourhoodZero(Image img, Vec3c nbCenter, Vec3c nbRadius, int[][][] nb) {
-		Vec3c start = nbCenter.sub(nbRadius);
-		Vec3c start0 = start;
-		Vec3c end = nbCenter.add(nbRadius);
+	private static void getNeighbourhoodZero(Image img, int cx, int cy, int cz, Vec3i nbRadius, int[][][] nb) {
+		//Vec3i start = nbCenter.sub(nbRadius);
+		int startx = cx - nbRadius.x;
+		int starty = cy - nbRadius.y;
+		int startz = cz - nbRadius.z;
+		
+		//Vec3i start0 = start;
+		int start0x = startx;
+		int start0y = starty;
+		int start0z = startz;
+		
+		//Vec3i end = nbCenter.add(nbRadius);
+		int endx = cx + nbRadius.x;
+		int endy = cy + nbRadius.y;
+		int endz = cz + nbRadius.z;
 
 		// Make sure start point is in the image.
 		// If start is > image dimensions, checks made for end will prevent the loops
 		// from running,
 		// so there's no need to check that start < image dimensions.
-		if (start.x < 0)
-			start.x = 0;
-		if (start.y < 0)
-			start.y = 0;
-		if (start.z < 0)
-			start.z = 0;
+		if (startx < 0)
+			startx = 0;
+		if (starty < 0)
+			starty = 0;
+		if (startz < 0)
+			startz = 0;
 
 		int w = img.width();
 		int h = img.height();
 		int d = img.depth();
 
 		// Make sure end point is in the image.
-		if (end.x > w - 1)
-			end.x = w - 1;
-		if (end.y > h - 1)
-			end.y = h - 1;
-		if (end.z > d - 1)
-			end.z = d - 1;
+		if (endx > w - 1)
+			endx = w - 1;
+		if (endy > h - 1)
+			endy = h - 1;
+		if (endz > d - 1)
+			endz = d - 1;
 
 		// Zero neighbourhood if there's not enough data to fill it.
-		if (start.x == 0 || start.y == 0 || start.z == 0 || end.x == w - 1 || end.y == h - 1 || end.z == d - 1) {
+		if (startx == 0 || starty == 0 || startz == 0 || endx == w - 1 || endy == h - 1 || endz == d - 1) {
 			for (int z = 0; z < 2 * nbRadius.z + 1; z++) {
 				for (int y = 0; y < 2 * nbRadius.y + 1; y++) {
 					for (int x = 0; x < 2 * nbRadius.x + 1; x++) {
@@ -263,11 +274,11 @@ public class Squared_Distance_Map_To_Squared_Distance_Ridge_ implements PlugInFi
 		}
 
 		// Copy data to neighbourhood image.
-		for (int z = (int) start.z; z <= end.z; z++) {
-			for (int y = (int) start.y; y <= end.y; y++) {
-				for (int x = (int) start.x; x <= end.x; x++) {
-					float val = img.get(new Vec3c(x, y, z));
-					nb[x - (int) start0.x][y - (int) start0.y][z - (int) start0.z] = (int) Math.round(val);
+		for (int z = startz; z <= endz; z++) {
+			for (int y = starty; y <= endy; y++) {
+				for (int x = startx; x <= endx; x++) {
+					float val = img.get(x, y, z);
+					nb[x - start0x][y - start0y][z - start0z] = (int) Math.round(val);
 				}
 			}
 		}
@@ -308,18 +319,22 @@ public class Squared_Distance_Map_To_Squared_Distance_Ridge_ implements PlugInFi
 		Loop.withIndex(0, dmap2.depth(), new Loop.Each() {
 
 			@Override
-			public void run(long z) {
+			public void run(long zl) {
+				
+				int z = (int)zl;
+				Vec3i ones = new Vec3i(1, 1, 1);
+				
 				for (int y = 0; y < dmap2.height(); y++) {
 					for (int x = 0; x < dmap2.width(); x++) {
 
-						Vec3c pos = new Vec3c(x, y, z);
+						//Vec3c pos = new Vec3c(x, y, z);
 
-						float cf = dmap2.get(pos);
+						float cf = dmap2.get(x, y, z);
 						int c = (int) Math.round(cf);
 						if (c != 0) {
 							int[][][] nb = nbStore.get();
 
-							getNeighbourhoodZero(dmap2, pos, new Vec3c(1, 1, 1), nb);
+							getNeighbourhoodZero(dmap2, x, y, z, ones, nb);
 
 							// Check all neighbours
 							if (!(
@@ -340,10 +355,10 @@ public class Squared_Distance_Map_To_Squared_Distance_Ridge_ implements PlugInFi
 										|| table3.get(nb[0][2][2]) >= c || table3.get(nb[2][0][2]) >= c
 										|| table3.get(nb[2][2][2]) >= c)) {
 								// This is center of locally maximal sphere
-								out.set(pos, c);
+								out.set(x, y, z, c);
 							} else {
 								// Not a center of locally maximal sphere
-								out.set(pos, 0);
+								out.set(x, y, z, 0);
 							}
 						}
 
