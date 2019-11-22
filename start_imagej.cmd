@@ -1,0 +1,1 @@
+javaw -Xmx14g -cp ij.jar ij.ImageJ
