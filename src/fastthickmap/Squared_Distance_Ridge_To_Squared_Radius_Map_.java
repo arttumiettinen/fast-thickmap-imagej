@@ -32,8 +32,8 @@ public class Squared_Distance_Ridge_To_Squared_Radius_Map_ implements PlugInFilt
 		if (r1Square == r2Square)
 			return true;
 
-		int r1 = ImageUtilities.largestIntWhoseSquareIsLessThan(r1Square);
-		int r2 = ImageUtilities.largestIntWhoseSquareIsLessThan(r2Square);
+		int r1 = MathUtils.largestIntWhoseSquareIsLessThan(r1Square);
+		int r2 = MathUtils.largestIntWhoseSquareIsLessThan(r2Square);
 
 		// If the r1 > r2, the projection of the circle 1 to x-axis completely overlaps
 		// projection of circle 2.
@@ -51,7 +51,7 @@ public class Squared_Distance_Ridge_To_Squared_Radius_Map_ implements PlugInFilt
 		for (int x = 0; x <= r1; x++) {
 			int y1Square = r1Square - x * x;
 			int y2Square = r2Square - x * x;
-			if (ImageUtilities.largestIntWhoseSquareIsLessThan(y1Square) > ImageUtilities
+			if (MathUtils.largestIntWhoseSquareIsLessThan(y1Square) > MathUtils
 					.largestIntWhoseSquareIsLessThan(y2Square))
 				return false;
 		}
@@ -108,8 +108,10 @@ public class Squared_Distance_Ridge_To_Squared_Radius_Map_ implements PlugInFilt
 	 * Data entry that must be saved for each pixel for each sphere that must be
 	 * considered in that pixel. This data structure should be as small as possible.
 	 */
-	// In C++ version we use struct similar to this, but here it causes a lot of overhead.
-	// Thus we declare that RiStorageItem = int, where the two shorts are packed into.
+	// In C++ version we use struct similar to this, but here it causes a lot of
+	// overhead.
+	// Thus we declare that RiStorageItem = int, where the two shorts are packed
+	// into.
 //	private static class RiStorageItem {
 //		/**
 //		 * x and y coordinate of the center of the sphere that this item corresponds to.
@@ -121,35 +123,37 @@ public class Squared_Distance_Ridge_To_Squared_Radius_Map_ implements PlugInFilt
 //			srcY = y;
 //		}
 //	};
-	
+
 	/**
 	 * Packs two shorts into one int that is RiStorageItem.
+	 * 
 	 * @param srcX
 	 * @param srcY
 	 * @return
 	 */
 	private static int makeRiStorageItem(short srcX, short srcY) {
-		return ((int)srcX << 16) | (int)srcY;
+		return ((int) srcX << 16) | (int) srcY;
 	}
-	
+
 	/**
 	 * Gets srcX component from int packed with makeRiStorageItem.
+	 * 
 	 * @param riStorageItem
 	 * @return
 	 */
 	private static short getSrcX(int riStorageItem) {
-		return (short)(riStorageItem >> 16);
+		return (short) (riStorageItem >> 16);
 	}
-	
+
 	/**
 	 * Gets srcY component from int packed with makeRiStorageItem.
+	 * 
 	 * @param riStorageItem
 	 * @return
 	 */
 	private static short getSrcY(int riStorageItem) {
-		return (short)(riStorageItem & 0xffff);
+		return (short) (riStorageItem & 0xffff);
 	}
-	
 
 	/**
 	 * Image that contains list of RiStorageItems in each pixel.
@@ -159,9 +163,9 @@ public class Squared_Distance_Ridge_To_Squared_Radius_Map_ implements PlugInFilt
 	 */
 	private static class RiImage extends ImageBase {
 		/**
-		 * The first array stores z-slices of the image (length = depth).
-		 * The second array stores each slice (length = width * height).
-		 * Each pixel stores array of ints (length = varying).
+		 * The first array stores z-slices of the image (length = depth). The second
+		 * array stores each slice (length = width * height). Each pixel stores array of
+		 * ints (length = varying).
 		 */
 		private int[][][] data;
 
@@ -175,15 +179,15 @@ public class Squared_Distance_Ridge_To_Squared_Radius_Map_ implements PlugInFilt
 		public int[] get(Vec3i pos) {
 			return data[pos.z][pos.y * width() + pos.x];
 		}
-		
+
 		public int[] get(int x, int y, int z) {
 			return data[z][y * width() + x];
 		}
-		
+
 		public void set(Vec3i pos, int[] items) {
 			data[pos.z][pos.y * width() + pos.x] = items;
 		}
-		
+
 		public void set(int x, int y, int z, int[] items) {
 			data[z][y * width() + x] = items;
 		}
@@ -191,11 +195,11 @@ public class Squared_Distance_Ridge_To_Squared_Radius_Map_ implements PlugInFilt
 
 	private static class Box {
 		private Vec3i pos;
-		//private Vec3c size;
+		// private Vec3c size;
 
 		public Box(Vec3i pos, Vec3i size) {
 			this.pos = pos;
-			//this.size = size;
+			// this.size = size;
 		}
 	}
 
@@ -271,14 +275,14 @@ public class Squared_Distance_Ridge_To_Squared_Radius_Map_ implements PlugInFilt
 			return -(this.ri2 - b.ri2);
 		}
 	};
-	
+
 	private static class TempArrays {
 		public ArrayList<ActiveSpheresSuperItem> activeSpheres = new ArrayList<ActiveSpheresSuperItem>(40);
 		public ArrayList<ActiveSpheresSuperItem> activeSpheresTmp = new ArrayList<ActiveSpheresSuperItem>(40);
 		public ArrayList<ActiveSpheresSuperItem> Ctmp = new ArrayList<ActiveSpheresSuperItem>(40);
 		public ArrayList<RiSuperItem> resultTmp = new ArrayList<RiSuperItem>(40);
 		public ArrayList<RiSuperItem> resultTmp2 = new ArrayList<RiSuperItem>(40);
-		
+
 		public PriorityQueue<ActiveSpheresSuperItem> activeSpheresPrio = new PriorityQueue<ActiveSpheresSuperItem>();
 	}
 
@@ -294,10 +298,10 @@ public class Squared_Distance_Ridge_To_Squared_Radius_Map_ implements PlugInFilt
 	 *                      the row.
 	 */
 	private static void singlePassSuper(ArrayList<ArrayList<RiSuperItem>> centers, ArrayList<ArrayList<RiSuperItem>> ri,
-			int dimensionality, Vec3i dimensions, Vec3i rowStart, int dim, int step,
-			TempArrays tempArrays) {
-		
-		// Stores the spheres that have been encountered and that have not been passed yet.
+			int dimensionality, Vec3i dimensions, Vec3i rowStart, int dim, int step, TempArrays tempArrays) {
+
+		// Stores the spheres that have been encountered and that have not been passed
+		// yet.
 		// Stores the center point, original radius, and ri.
 		ArrayList<ActiveSpheresSuperItem> activeSpheres = tempArrays.activeSpheres;
 		ArrayList<ActiveSpheresSuperItem> activeSpheresTmp = tempArrays.activeSpheresTmp;
@@ -305,7 +309,7 @@ public class Squared_Distance_Ridge_To_Squared_Radius_Map_ implements PlugInFilt
 
 		ArrayList<RiSuperItem> resultTmp = tempArrays.resultTmp;
 		ArrayList<RiSuperItem> resultTmp2 = tempArrays.resultTmp2;
-		
+
 		activeSpheres.clear();
 		activeSpheresTmp.clear();
 		Ctmp.clear();
@@ -402,8 +406,7 @@ public class Squared_Distance_Ridge_To_Squared_Radius_Map_ implements PlugInFilt
 						{
 							// In the second last dimension only really visible spans are needed as there's
 							// no next dimension whose ri we would calculate based on the spans.
-							if (ImageUtilities.largestIntWhoseSquareIsLessThan(newri2) > ImageUtilities
-									.largestIntWhoseSquareIsLessThan(currri2))
+							if (MathUtils.largestIntWhoseSquareIsLessThan(newri2) > MathUtils.largestIntWhoseSquareIsLessThan(currri2))
 								rilist.add(resultTmp2n);
 						} else if (dim == dimensionality - 3) // 3 - 3 == 0 == 1st dimension
 						{
@@ -442,9 +445,7 @@ public class Squared_Distance_Ridge_To_Squared_Radius_Map_ implements PlugInFilt
 	 *                             assume empty list.
 	 */
 	private static void singlePassFinalSuper(ArrayList<ArrayList<RiSuperItem>> centers, Image result, Vec3i rowStart,
-			int dim, int step, Vec3i blockOrigin,
-			TempArrays tempArrays)
-	{
+			int dim, int step, Vec3i blockOrigin, TempArrays tempArrays) {
 
 		// Stores the spheres that have been encountered and that have not been passed
 		// yet.
@@ -480,7 +481,7 @@ public class Squared_Distance_Ridge_To_Squared_Radius_Map_ implements PlugInFilt
 				int rn2 = R2 - dx * dx;
 				if (rn2 > 0) {
 					// Note that previous pass may have assigned larger value to the output.
-					//Vec3c pp = p.add(blockOrigin);
+					// Vec3c pp = p.add(blockOrigin);
 					int ppx = p.x + blockOrigin.x;
 					int ppy = p.y + blockOrigin.y;
 					int ppz = p.z + blockOrigin.z;
@@ -513,17 +514,18 @@ public class Squared_Distance_Ridge_To_Squared_Radius_Map_ implements PlugInFilt
 			throw new IllegalArgumentException("Linear image size exceeds " + Short.MAX_VALUE
 					+ " pixels. This implementation is not configured for that big images.");
 
-		int bx = (int)bounds.pos.x;
-		int by = (int)bounds.pos.y;
-		int bz = (int)bounds.pos.z;
-		
+		int bx = (int) bounds.pos.x;
+		int by = (int) bounds.pos.y;
+		int bz = (int) bounds.pos.z;
+
 		for (int z = 0; z < ri.depth(); z++) {
 			for (int y = 0; y < ri.height(); y++) {
 				for (int x = 0; x < ri.width(); x++) {
 					float R2 = centers2.get(bx + x, by + y, bz + z);
-					
+
 					if (R2 > 0) {
-						ri.set(x, y, z, new int[] { makeRiStorageItem((short) (x + bounds.pos.x), (short) (y + bounds.pos.y))} );
+						ri.set(x, y, z, new int[] {
+								makeRiStorageItem((short) (x + bounds.pos.x), (short) (y + bounds.pos.y)) });
 					}
 				}
 			}
@@ -547,15 +549,16 @@ public class Squared_Distance_Ridge_To_Squared_Radius_Map_ implements PlugInFilt
 
 		short srcX = getSrcX(riStorageItem);
 		short srcY = getSrcY(riStorageItem);
-		
-		// This version reads always from the full image (difference compared to c++ version)
+
+		// This version reads always from the full image (difference compared to c++
+		// version)
 		float R2f = dmap2Full.get(srcX, srcY, p.z + blockPos.z);
 		int R2 = (int) Math.round(R2f);
 		int dx = p.x - (srcX - blockPos.x);
 		int dy = p.y - (srcY - blockPos.y);
-		
+
 		int ri2 = R2 - dx * dx - dy * dy;
-		
+
 		return new RiSuperItem(R2, ri2, srcX, srcY);
 	}
 
@@ -572,9 +575,10 @@ public class Squared_Distance_Ridge_To_Squared_Radius_Map_ implements PlugInFilt
 	 * @param in Source set
 	 * @param p  Position (in the block) where the in set is taken from.
 	 */
-	private static void toRiSet(int[] riStorageSet, ArrayList<RiSuperItem> out, Vec3i p, Vec3i blockPos, Image dmap2Full) {
+	private static void toRiSet(int[] riStorageSet, ArrayList<RiSuperItem> out, Vec3i p, Vec3i blockPos,
+			Image dmap2Full) {
 		out.clear();
-		if(riStorageSet != null) {
+		if (riStorageSet != null) {
 			for (int n = 0; n < riStorageSet.length; n++)
 				out.add(toRiItem(riStorageSet[n], p, blockPos, dmap2Full));
 		}
@@ -584,9 +588,9 @@ public class Squared_Distance_Ridge_To_Squared_Radius_Map_ implements PlugInFilt
 	 * Converts RiSuperSet to RiStorageSet.
 	 */
 	private static int[] toStorageSet(ArrayList<RiSuperItem> in) {
-		if(in.size() <= 0)
+		if (in.size() <= 0)
 			return null;
-		
+
 		int[] out = new int[in.size()];
 		for (int n = 0; n < in.size(); n++)
 			out[n] = toRiStorageItem(in.get(n));
@@ -611,7 +615,7 @@ public class Squared_Distance_Ridge_To_Squared_Radius_Map_ implements PlugInFilt
 
 		// Determine count of pixels to process
 		Vec3i reducedDimensions = getReducedDimensions(ri.getDimensions(), dim);
-		long rowCount = (long)reducedDimensions.x * (long)reducedDimensions.y * (long)reducedDimensions.z;
+		long rowCount = (long) reducedDimensions.x * (long) reducedDimensions.y * (long) reducedDimensions.z;
 
 		Vec3i blockPos = new Vec3i(currBlock.pos);
 
@@ -639,7 +643,7 @@ public class Squared_Distance_Ridge_To_Squared_Radius_Map_ implements PlugInFilt
 				return result;
 			}
 		};
-		
+
 		ThreadLocal<TempArrays> tempArraysStore = new ThreadLocal<TempArrays>() {
 			@Override
 			protected TempArrays initialValue() {
@@ -668,8 +672,10 @@ public class Squared_Distance_Ridge_To_Squared_Radius_Map_ implements PlugInFilt
 				}
 
 				if (!isFinalPass) {
-					singlePassSuper(inRow, outRow, dmap2.getDimensionality(), ri.getDimensions(), start, dim, 1, tempArrays);
-					singlePassSuper(inRow, outRow, dmap2.getDimensionality(), ri.getDimensions(), start, dim, -1, tempArrays);
+					singlePassSuper(inRow, outRow, dmap2.getDimensionality(), ri.getDimensions(), start, dim, 1,
+							tempArrays);
+					singlePassSuper(inRow, outRow, dmap2.getDimensionality(), ri.getDimensions(), start, dim, -1,
+							tempArrays);
 
 					// Copy data back to storage
 					pos = start;
@@ -693,7 +699,7 @@ public class Squared_Distance_Ridge_To_Squared_Radius_Map_ implements PlugInFilt
 	 */
 	private static void buildCircleLookup(Image dmap2) throws InterruptedException {
 
-		float M = ImageUtilities.max(dmap2);
+		float M = ImageUtils.max(dmap2);
 		if (M >= Integer.MAX_VALUE)
 			throw new IllegalArgumentException(
 					"The squared distance map contains too large values. (This error is easily avoidable by changing buildCircleLookup functionality.)");
@@ -714,7 +720,7 @@ public class Squared_Distance_Ridge_To_Squared_Radius_Map_ implements PlugInFilt
 		RiImage ri = new RiImage(dmap2.getDimensions());
 		Box fullBox = new Box(new Vec3i(0, 0, 0), dmap2.getDimensions());
 		prepareSuper(dmap2, ri, fullBox);
-		ImageUtilities.setValue(tmap2, 0);
+		ImageUtils.setValue(tmap2, 0);
 
 		for (int n = 0; n < dmap2.getDimensionality(); n++)
 			processDimensionSuper(ri, n, dmap2, tmap2, fullBox, dmap2.getDimensionality());
@@ -742,19 +748,19 @@ public class Squared_Distance_Ridge_To_Squared_Radius_Map_ implements PlugInFilt
 //				}
 //			}
 //		}
-		
+
 		DoubleAdder sum = new DoubleAdder();
 		DoubleAdder count = new DoubleAdder();
-		
+
 		Loop.withIndex(0, dmap2.depth(), new Loop.Each() {
 
 			@Override
 			public void run(long z) {
-				
-				int iz = (int)z;
+
+				int iz = (int) z;
 				double localSum = 0;
 				double localCount = 0;
-				
+
 				for (int y = 0; y < dmap2.height(); y++) {
 					for (int x = 0; x < dmap2.width(); x++) {
 						float pix = dmap2.get(x, y, iz);
@@ -764,19 +770,19 @@ public class Squared_Distance_Ridge_To_Squared_Radius_Map_ implements PlugInFilt
 						}
 					}
 				}
-				
+
 				sum.add(localSum);
 				count.add(localCount);
 			}
-			
+
 		});
 
 		double s = sum.sum();
 		double c = count.sum();
-		
+
 		if (c > 0)
 			s /= c;
-		
+
 		return s;
 	}
 
@@ -807,11 +813,11 @@ public class Squared_Distance_Ridge_To_Squared_Radius_Map_ implements PlugInFilt
 	private static double getMemoryRequirement(Vec3i dimensions, double meanr) {
 		// Memory requirement for C++ code is
 		// (4.5 + 0.2 * meanr) * dmap2.pixelCount() * sizeof(float)
-		// Here we don't have small vector optimization, so make it
-		// (7 + 0.2 * meanr) * dmap2.pixelCount() * sizeof(float)
+		// Here we don't have small vector optimization and additionally Java has
+		// big overhead for all objects, so make it pretty much larger!
 
 		final double FLOAT_SIZE = 4;
-		return (7 + 0.2 * meanr) * (double)dimensions.x * (double)dimensions.y * (double)dimensions.z * FLOAT_SIZE;
+		return (7 + 0.4 * meanr) * (double) dimensions.x * (double) dimensions.y * (double) dimensions.z * FLOAT_SIZE;
 	}
 
 	/**
@@ -912,22 +918,22 @@ public class Squared_Distance_Ridge_To_Squared_Radius_Map_ implements PlugInFilt
 			for (int z = 0; z < ri.depth(); z++) {
 				for (int y = 0; y < ri.height(); y++) {
 					for (int x = 0; x < ri.width(); x++) {
-						//Vec3c pos = new Vec3c(x, y, z);
-						//setBlockAndStart(blockIndex, startIndex, index, pos);
+						// Vec3c pos = new Vec3c(x, y, z);
+						// setBlockAndStart(blockIndex, startIndex, index, pos);
 						index.set(x, y, z, setBlockAndStart(blockIndex, startIndex));
 
 						int[] s = ri.get(x, y, z);
-						
+
 						// Write size
 						short count = s != null ? (short) s.length : 0;
 						out.writeShort(count);
 
-						if(count > 0) {
+						if (count > 0) {
 							// Write items
 							for (int m = 0; m < s.length; m++) {
 								short val = getSrcX(s[m]);
 								out.writeShort(val);
-	
+
 								val = getSrcY(s[m]);
 								out.writeShort(val);
 							}
@@ -959,7 +965,7 @@ public class Squared_Distance_Ridge_To_Squared_Radius_Map_ implements PlugInFilt
 			for (int z = 0; z < ri.depth(); z++) {
 				for (int y = 0; y < ri.height(); y++) {
 					for (int x = 0; x < ri.width(); x++) {
-						//Vec3c pos = new Vec3c(x, y, z);
+						// Vec3c pos = new Vec3c(x, y, z);
 						long startItem = index.get(x, y, z);
 						short blockIndex = getBlockIndex(startItem);
 						long startIndex = getStartIndex(startItem);
@@ -1023,13 +1029,16 @@ public class Squared_Distance_Ridge_To_Squared_Radius_Map_ implements PlugInFilt
 			for (int z = 0; z < ri.depth(); z++) {
 				for (int y = 0; y < ri.height(); y++) {
 					for (int x = 0; x < ri.width(); x++) {
-						//Vec3c p = new Vec3c(x, y, z);
-						//float R2 = dmap2.get(p.add(blockOrigin));
+						// Vec3c p = new Vec3c(x, y, z);
+						// float R2 = dmap2.get(p.add(blockOrigin));
 						float R2 = dmap2.get(x + blockOrigin.x, y + blockOrigin.y, z + blockOrigin.z);
 						if (R2 > 0) {
-							//ri.get(p).add(new RiStorageItem((short) (x + blockOrigin.x), (short) (y + blockOrigin.y)));
-							//ri.set(p, new int[] { makeRiStorageItem((short) (x + blockOrigin.x), (short) (y + blockOrigin.y)) });
-							ri.set(x, y, z, new int[] { makeRiStorageItem((short) (x + blockOrigin.x), (short) (y + blockOrigin.y)) });
+							// ri.get(p).add(new RiStorageItem((short) (x + blockOrigin.x), (short) (y +
+							// blockOrigin.y)));
+							// ri.set(p, new int[] { makeRiStorageItem((short) (x + blockOrigin.x), (short)
+							// (y + blockOrigin.y)) });
+							ri.set(x, y, z, new int[] {
+									makeRiStorageItem((short) (x + blockOrigin.x), (short) (y + blockOrigin.y)) });
 						}
 					}
 				}

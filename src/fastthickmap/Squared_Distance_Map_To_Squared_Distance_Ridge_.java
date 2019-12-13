@@ -28,6 +28,140 @@ import ij.process.ImageProcessor;
  */
 public class Squared_Distance_Map_To_Squared_Distance_Ridge_ implements PlugInFilter {
 
+	private static ArrayList<Integer> squareTable = new ArrayList<Integer>(); 
+
+	/**
+	 * Init table of largest integers whose square is less than table index.
+	 */
+	private static void initSquareTable(int maxSquare) {
+		if (squareTable.size() < maxSquare) {
+			squareTable.ensureCapacity(maxSquare);
+			while (squareTable.size() <= maxSquare)
+				squareTable.add(MathUtils.largestIntWhoseSquareIsLessThan(squareTable.size()));
+		}
+	}
+
+	/**
+	 * Get largest integer whose square is less than given value. To use this
+	 * function, the cache must be first initialized with initSquareTable.
+	 */
+	private static int largestIntWhoseSquareIsLessThanCached(int square) {
+		return squareTable.get(square);
+	}
+	
+	/**
+	Helper for getMaxSphereRadius.
+	Tests if a sphere of squared radius Rdot2 centered at (cx, cy, cz) fits inside a sphere of radius R2 centered at origin.
+	*/
+	private static boolean testFit(int cx, int cy, int cz, int R2, int size, int Rdot2)
+	{
+		for (int z = 0; z < size; z++)
+		{
+			int dz = z - cz;
+			for (int y = 0; y < size; y++)
+			{
+				// Squared x-coordinate of the surface of a sphere centered at (0, cy, cz) and having squared radiut Rdot2.
+				int dy = y - cy;
+				int test = Rdot2 - dy * dy - dz * dz;
+
+				if (test >= 0)
+				{
+					test = largestIntWhoseSquareIsLessThanCached(test) + cx;
+
+
+					// Squared x-coordinate of the surface of a sphere centered at origin and having squared radius R2.
+					int Rx = R2 - y * y - z * z;
+
+					if (Rx >= 0)
+						Rx = largestIntWhoseSquareIsLessThanCached(Rx);
+					else
+						Rx = -1;
+
+					if (test > Rx)
+					{
+						// The sphere does not fit
+						return false;
+					}
+				}
+			}
+		}
+
+		// Here sphere with radius of Rdot fits inside the central sphere.
+		return true;
+	}
+
+
+
+	private static int search(int R2Index, ArrayList<Integer> radii2, int R2, int cx, int cy, int cz, int size)
+	{
+		// Binary search for last index for which testFit(... R2, size, radii2[index]) gives true.
+		// This handles also -1 elements in the radii2 array.
+
+		int  first = R2Index;
+		while (first > 0 && (radii2.get(first) < 0 || largestIntWhoseSquareIsLessThanCached(radii2.get(first)) >= largestIntWhoseSquareIsLessThanCached(R2) - 2))
+			first--;
+
+		int last = R2Index;
+
+		while (last - first > 1)
+		{
+			int mid = (last + first) / 2;
+
+			// Handle -1 elements in the array
+			while (mid < last && radii2.get(mid) < 0)
+				mid++;
+
+			if (mid >= last)
+			{
+				// last is the first non -1 element after (and including) mid.
+				last = (last + first) / 2;
+			}
+			else
+			{
+
+				int Rdot2 = radii2.get(mid);
+
+				if (testFit(cx, cy, cz, R2, size, Rdot2))
+				{
+					// Fits. Set start = mid
+					first = mid;
+				}
+				else
+				{
+					// Does not fit. Set end = mid
+					last = mid;
+				}
+			}
+		}
+
+		return first;
+	}
+
+
+
+	/*
+	Calculates squared radius of largest sphere that is centered at (cx, cy, cz) and fits inside sphere of radius sqrt(r2) centered at (0, 0, 0).
+	Works for positive (cx, cy, cz) only.
+	indices lookup table gives index for squared radius.
+	radii lookup table gives radius for index.
+	NOTE: This is optimized version that does not use separate mask array, and does only 1/8 of processing of the unoptimized version.
+	*/
+	private static int getMaxSphereRadius(int cx, int cy, int cz, ArrayList<Integer> radii2, int R2Index)
+	{
+		int R2 = radii2.get(R2Index);
+		if (R2 < 0)
+			throw new IllegalArgumentException("Determining Danielsson tables for squared radius that is not a sum of three squares.");
+
+		
+		int Rint = (int)Math.ceil(Math.sqrt(R2));
+		int size = Rint + 1;
+
+		int trial = search(R2Index, radii2, R2, cx, cy, cz, size);
+
+		return trial;
+	}
+	
+	
 	/**
 	 * Calculates squared radius of largest sphere that is centered at (cx, cy, cz)
 	 * and fits inside sphere of radius sqrt(r2) centered at (0, 0, 0). Works for
@@ -36,64 +170,64 @@ public class Squared_Distance_Map_To_Squared_Distance_Ridge_ implements PlugInFi
 	 * version that does not use separate mask array, and does only 1/8 of
 	 * processing of the unoptimized version.
 	 */
-	private static int getMaxSphereRadius(int cx, int cy, int cz, ArrayList<Integer> radii2, int R2Index) {
-		int R2 = radii2.get(R2Index);
-		if (R2 < 0)
-			throw new IllegalArgumentException(
-					"Determining Danielsson tables for squared radius that is not a sum of three squares.");
-
-		// Create mask of sphere centered at origin, having radius R
-		int Rint = (int) Math.ceil(Math.sqrt(R2));
-
-		int size = Rint + 1;
-
-		// Find the largest r that still fits inside the central sphere
-		// by testing mask of sphere centered at (cx, cy, cz).
-		int startInd = R2Index;
-		for (int RdotInd = startInd - 1; RdotInd >= 0; RdotInd--) {
-			int Rdot2 = radii2.get(RdotInd);
-
-			if (Rdot2 >= 0) {
-				boolean fits = true;
-
-				outerLoop: for (int z = 0; z < size; z++) {
-					int dz = z - cz;
-					for (int y = 0; y < size; y++) {
-						// Squared x coordinate of the surface of a sphere centered at origin and having
-						// squared radius R2.
-						int Rx = R2 - y * y - z * z;
-
-						if (Rx >= 0)
-							Rx = ImageUtilities.largestIntWhoseSquareIsLessThan(Rx);
-						else
-							Rx = -1;
-
-						// Squared x-coordinate of the surface of a sphere centered at (0, cy, cz) and
-						// having squared radiut Rdot2.
-						int dy = y - cy;
-						int test = Rdot2 - dy * dy - dz * dz;
-
-						if (test >= 0) {
-							test = ImageUtilities.largestIntWhoseSquareIsLessThan(test) + cx;
-
-							if (test > Rx) {
-								// The sphere does not fit, we can skip processing of both inner loops.
-								fits = false;
-								break outerLoop;
-							}
-						}
-					}
-				}
-
-				// Here sphere with radius of Rdot fits inside the central sphere.
-				if (fits)
-					return Rdot2;
-			}
-
-		}
-
-		return 0;
-	}
+//	private static int getMaxSphereRadius(int cx, int cy, int cz, ArrayList<Integer> radii2, int R2Index) {
+//		int R2 = radii2.get(R2Index);
+//		if (R2 < 0)
+//			throw new IllegalArgumentException(
+//					"Determining Danielsson tables for squared radius that is not a sum of three squares.");
+//
+//		// Create mask of sphere centered at origin, having radius R
+//		int Rint = (int) Math.ceil(Math.sqrt(R2));
+//
+//		int size = Rint + 1;
+//
+//		// Find the largest r that still fits inside the central sphere
+//		// by testing mask of sphere centered at (cx, cy, cz).
+//		int startInd = R2Index;
+//		for (int RdotInd = startInd - 1; RdotInd >= 0; RdotInd--) {
+//			int Rdot2 = radii2.get(RdotInd);
+//
+//			if (Rdot2 >= 0) {
+//				boolean fits = true;
+//
+//				outerLoop: for (int z = 0; z < size; z++) {
+//					int dz = z - cz;
+//					for (int y = 0; y < size; y++) {
+//						// Squared x-coordinate of the surface of a sphere centered at (0, cy, cz) and
+//						// having squared radiut Rdot2.
+//						int dy = y - cy;
+//						int test = Rdot2 - dy * dy - dz * dz;
+//
+//						if (test >= 0) {
+//							test = largestIntWhoseSquareIsLessThanCached(test) + cx;
+//							
+//							// Squared x coordinate of the surface of a sphere centered at origin and having
+//							// squared radius R2.
+//							int Rx = R2 - y * y - z * z;
+//
+//							if (Rx >= 0)
+//								Rx = largestIntWhoseSquareIsLessThanCached(Rx);
+//							else
+//								Rx = -1;
+//
+//							if (test > Rx) {
+//								// The sphere does not fit, we can skip processing of both inner loops.
+//								fits = false;
+//								break outerLoop;
+//							}
+//						}
+//					}
+//				}
+//
+//				// Here sphere with radius of Rdot fits inside the central sphere.
+//				if (fits)
+//					return Rdot2;
+//			}
+//
+//		}
+//
+//		return 0;
+//	}
 
 	/**
 	 * Expands Danielsson lookup tables so that they cover at least squared radius
@@ -106,7 +240,7 @@ public class Squared_Distance_Map_To_Squared_Distance_Ridge_ implements PlugInFi
 			return;
 
 		// Determine which elements of the tables need to be determined
-		int Rmax = ImageUtilities.largestIntWhoseSquareIsLessThan(R2max) + 1;
+		int Rmax = MathUtils.largestIntWhoseSquareIsLessThan(R2max) + 1;
 		final int invalidValue = -1;
 		final int toBeDeterminedValue = Integer.MAX_VALUE;
 		for (int z = 0; z < Rmax; z++) {
@@ -134,13 +268,22 @@ public class Squared_Distance_Map_To_Squared_Distance_Ridge_ implements PlugInFi
 		}
 
 		// Create a list of possible radius^2 values.
+		int maxr2 = 0;
 		ArrayList<Integer> radii2 = new ArrayList<Integer>();
 		for (int r2 = 0; r2 < table1.size(); r2++) {
 			if (table1.get(r2) != invalidValue) // Value is possible if it is not marked as invalid in the tables.
+			{
 				radii2.add(r2);
-			else
+				if(r2 > maxr2)
+					maxr2 = r2;
+			}
+			else {
 				radii2.add(-1);
+			}
 		}
+		
+		
+		initSquareTable(maxr2);
 
 		AtomicInteger progress = new AtomicInteger(0);
 		Loop.withIndex(0, table1.size(), new Loop.Each() {
@@ -300,7 +443,7 @@ public class Squared_Distance_Map_To_Squared_Distance_Ridge_ implements PlugInFi
 	 */
 	public static void danielsson(Image dmap2, Image out) throws InterruptedException {
 
-		int maxr2 = (int) Math.round(ImageUtilities.max(dmap2));
+		int maxr2 = (int) Math.round(ImageUtils.max(dmap2));
 
 		ArrayList<Integer> table1 = new ArrayList<Integer>();
 		ArrayList<Integer> table2 = new ArrayList<Integer>();

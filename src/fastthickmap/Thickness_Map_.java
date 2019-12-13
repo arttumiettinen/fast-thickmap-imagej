@@ -5,6 +5,7 @@ import java.io.IOException;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
+import ij.gui.GenericDialog;
 import ij.process.StackConverter;
 import ij.plugin.ContrastEnhancer;
 import ij.plugin.filter.PlugInFilter;
@@ -18,6 +19,8 @@ public class Thickness_Map_ implements PlugInFilter {
 
 	@Override
 	public void run(ImageProcessor arg0) {
+		
+		boolean approximation = defaultIntApprox;
 
 		String tempDir = Squared_Distance_Ridge_To_Squared_Radius_Map_.getImageDirectory(iplus);
 
@@ -39,6 +42,11 @@ public class Thickness_Map_ implements PlugInFilter {
 
 			IJ.showStatus("Squared distance ridge...");
 			Squared_Distance_Map_To_Squared_Distance_Ridge_.danielsson(img, outImg);
+			
+			if(approximation) {
+				IJ.showStatus("Approximation by rounding distance values to the nearest integers...");
+				Round_Squared_Distance_Ridge_.roundSquaredRidge(outImg);
+			}
 
 			IJ.showStatus("Squared local radius...");
 			Squared_Distance_Ridge_To_Squared_Radius_Map_.thickmap2(outImg, img, tempDir);
@@ -57,8 +65,20 @@ public class Thickness_Map_ implements PlugInFilter {
 		}
 	}
 
+	static boolean defaultIntApprox = false;
+	
 	@Override
 	public int setup(String arg0, ImagePlus img) {
+		
+		GenericDialog dlg = new GenericDialog("Thickness map settings");
+		dlg.addCheckbox("Integer radius approximation", defaultIntApprox);
+		dlg.showDialog();
+		
+		if(dlg.wasCanceled())
+			return DONE;
+		
+		defaultIntApprox = dlg.getNextBoolean();
+		
 		iplus = img;
 		return DOES_8G + DOES_16 + DOES_32;
 	}

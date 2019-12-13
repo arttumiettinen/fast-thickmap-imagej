@@ -22,4 +22,18 @@ public class MathUtils {
 		value.z = clamp(value.z, lower.z, upper.z);
 	}
 
+	/**
+	 * Returns largest integer value whose square is less than given value.
+	 */
+	public static int largestIntWhoseSquareIsLessThan(int square)
+	{
+		// Initial guess using floating point math
+		int result = (int)Math.floor(Math.sqrt(square));
+
+		// Refine the result in the case there are floating point inaccuracies
+		while (result * result < square)
+			result++;
+		result--;
+		return result;
+	}
 }

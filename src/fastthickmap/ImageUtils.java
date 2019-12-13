@@ -3,7 +3,7 @@ package fastthickmap;
 import java.util.concurrent.atomic.DoubleAccumulator;
 import java.util.function.DoubleBinaryOperator;
 
-public class ImageUtilities {
+public class ImageUtils {
 
 	/**
 	 * Calculates maximum value in the given image.
@@ -80,21 +80,6 @@ public class ImageUtilities {
 					slice[n] = val;
 			}
 		});
-	}
-	
-	/**
-	 * Returns largest integer value whose square is less than given value.
-	 */
-	public static int largestIntWhoseSquareIsLessThan(int square)
-	{
-		// Initial guess using floating point math
-		int result = (int)Math.floor(Math.sqrt(square));
-
-		// Refine the result in the case there are floating point inaccuracies
-		while (result * result < square)
-			result++;
-		result--;
-		return result;
 	}
 	
 }
