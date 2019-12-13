@@ -1,5 +1,11 @@
 package fastthickmap;
 
+/**
+ * Simple mathematical utlities.
+ * 
+ * @author miettinen_a
+ *
+ */
 public class MathUtils {
 
 	/**

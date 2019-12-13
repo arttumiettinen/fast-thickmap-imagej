@@ -22,6 +22,12 @@ import ij.plugin.filter.PlugInFilter;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 
+/**
+ * ImageJ plugin that converts squared distance ridge or squared distance map to squared radius map.
+ * 
+ * @author miettinen_a
+ *
+ */
 public class Squared_Distance_Ridge_To_Squared_Radius_Map_ implements PlugInFilter {
 
 	/**

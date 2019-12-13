@@ -2,6 +2,11 @@ package fastthickmap;
 
 import java.util.ArrayList;
 
+/**
+ * Contains utility methods needed for management of lists.
+ * @author miettinen_a
+ *
+ */
 public class ListUtils {
 
 	/**

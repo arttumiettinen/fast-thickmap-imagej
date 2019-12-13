@@ -3,6 +3,11 @@ package fastthickmap;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
+/**
+ * Disk-mapped bufffer that provides read and write access to the underlying data.
+ * @author miettinen_a
+ *
+ */
 public class DiskMappedWriteBuffer extends DiskMappedBufferBase {
 
 	public DiskMappedWriteBuffer(String filename, long length) throws FileNotFoundException, IOException {

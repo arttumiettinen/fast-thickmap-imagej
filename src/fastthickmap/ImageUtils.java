@@ -3,6 +3,12 @@ package fastthickmap;
 import java.util.concurrent.atomic.DoubleAccumulator;
 import java.util.function.DoubleBinaryOperator;
 
+/**
+ * Contains simple utility methods for various image processing tasks.
+ * 
+ * @author miettinen_a
+ *
+ */
 public class ImageUtils {
 
 	/**

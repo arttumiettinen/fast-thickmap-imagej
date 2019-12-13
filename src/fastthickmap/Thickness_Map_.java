@@ -13,6 +13,12 @@ import ij.process.FloatProcessor;
 import ij.process.ImageConverter;
 import ij.process.ImageProcessor;
 
+/**
+ * ImageJ plugin that transforms image to its local thickness map.
+ *  
+ * @author miettinen_a
+ *
+ */
 public class Thickness_Map_ implements PlugInFilter {
 
 	private ImagePlus iplus;

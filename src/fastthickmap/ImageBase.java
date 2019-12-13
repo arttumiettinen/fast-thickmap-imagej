@@ -1,5 +1,10 @@
 package fastthickmap;
 
+/**
+ * Base class for images, provides basic functionality like dimension management.
+ * @author miettinen_a
+ *
+ */
 public abstract class ImageBase {
 
 	/**

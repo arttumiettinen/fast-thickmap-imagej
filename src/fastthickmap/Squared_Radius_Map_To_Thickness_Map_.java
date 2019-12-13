@@ -7,6 +7,12 @@ import ij.ImagePlus;
 import ij.plugin.filter.PlugInFilter;
 import ij.process.ImageProcessor;
 
+/**
+ * ImageJ plugin that converts squared radius map to thickness map.
+ * 
+ * @author miettinen_a
+ *
+ */
 public class Squared_Radius_Map_To_Thickness_Map_ implements PlugInFilter {
 
 	/**

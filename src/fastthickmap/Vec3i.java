@@ -1,5 +1,11 @@
 package fastthickmap;
 
+/**
+ * 3-component integer vector.
+ * 
+ * @author miettinen_a
+ *
+ */
 public class Vec3i {
 	public int x, y, z;
 	
