@@ -110,8 +110,8 @@ If you use this plugin in scientific work, please cite [a]_.
 This plugin is licensed under the `GNU General Public License Version 3 <https://www.gnu.org/licenses/gpl-3.0.html>`__.
 
 
-References
-----------
+Bibliography
+------------
 
 .. [a] A. Miettinen, G. Lovric, E. Borisova, M. Stampanoni, Separable distributed local thickness algorithm for efficient morphological characterization of terabyte-scale volume images, in press, 2020.
 
