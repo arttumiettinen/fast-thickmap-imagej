@@ -1,0 +1,128 @@
+.. Fast thickmap documentation master file, created by
+   sphinx-quickstart on Mon Feb 10 13:21:24 2020.
+   You can adapt this file completely to your liking, but it should at least
+   contain the root `toctree` directive.
+
+Fast thickmap ImageJ/Fiji plugin
+================================
+
+This is documentation for the Fast thickmap ImageJ/Fiji plugin.
+
+
+
+
+What does it do?
+----------------
+
+The Fast thickmap plugin calculates local thickness map of a binary image.
+Local thickness at :math:`\vec{x}` is the diameter of the largest sphere that contains :math:`\vec{x}` and
+fits into the foreground pixels. If the set of foreground pixels is denoted by :math:`\Omega`, the local thickness
+:math:`\tau` is defined by
+
+.. math::
+
+	\tau(\vec{x}) = 2 R(\vec{x}) = 2 \max(\{ r \mid \vec{x} \in S(\vec{p}, r) \subseteq \Omega, \vec{p} \in \Omega \}),
+	
+where :math:`S(\vec{p}, r)` is a sphere centered at :math:`\vec{p}` having radius :math:`r`.
+
+The local thickness map can be used, e.g. to determine the diameter distribution of structures in the image.
+
+.. figure:: head_montage.png
+   :scale: 100 %
+   :alt: Input image and local thickness
+
+   One slice of a binary input image (left) and its local thickness map (right). Brighter colors correspond to thicker regions.
+
+
+Installation
+------------
+
+Plain ImageJ
+************
+
+Download the .jar file LINK into Plugins folder, and re-start ImageJ or use Help>Refresh menus command.
+The Fast thickmap plugin(s) will be installed into the Plugins>Fast thickmap submenu.
+
+
+Fiji
+****
+
+Enable update site XXX and perform update.
+The Fast thickmap plugins will be installed into the Plugins>Fast thickmap submenu.
+
+
+
+
+Usage
+-----
+
+Make a binary image and then run Plugins>Fast Thickmap on it.
+The plugin will calculate the local thickness map of non-zero pixels.
+
+In the settings dialog you can specify if you would like to use the integer radius approximation.
+The approximation makes processing even faster but the resulting thickness map will contain only integer values.
+
+If the temporary data required by the plugin does not fit into the RAM of your computer, your image will be automatically
+processed in smaller chunks.
+
+
+How it works?
+-------------
+
+The algorithm is described in [a]_.
+Essentially, it follows the same procedure than the Hildebrand-Ruegsegger algorithm [b]_, but replaces
+its sphere plotting phase with a faster algorithm.
+
+First, a distance map of the foreground pixels (non-zero pixels) is calculated.
+The distance map is then processed into a distance ridge.
+The distance ridge is a superset of the centers of maximal spheres that must be drawn in order to generate
+the thickness map.
+Each distance ridge point defines a sphere, and all the spheres are drawn using a separable algorithm.
+This results in a local squared radius map that is finally processed into the local thickness map.
+
+The set of fast thickmap plugins includes all the above steps as separate plugins, and a driver plugin that
+does all of the steps at once.
+
+The result is very similar to what can be done with the `standard Hildebrand-Ruegsegger local thickness plugin <https://imagej.net/Local_Thickness>`__ [b]_,
+but
+
+	* the calculation is faster and
+	* the definition of a digital sphere is slightly different between the Hildebrand-Ruegsegger and the Fast thickmap plugins. Do not expect 100 % match in the results.
+	* As a downside, this faster algorithm requires more memory, but that is overcome by processing large images in smaller chunks as discussed above.
+
+
+
+See also
+--------
+
+A more performant implementation is available as a standalone program or Python package in the `Pi2 software <https://github.com/arttumiettinen/pi2>`__.
+An example and the documentation can be found `here <https://pi2-docs.readthedocs.io/en/latest/examples/ex_local_thickness.html>`__.
+
+The original Hildebrand-Ruegsegger plugin can be found `here <https://imagej.net/Local_Thickness>`__ or `here <https://www.optinav.info/Local_Thickness.htm>`__.
+
+
+License
+-------
+
+If you use this plugin in scientific work, please cite [a]_.
+
+This plugin is licensed under the `GNU General Public License Version 3 <https://www.gnu.org/licenses/gpl-3.0.html>`__.
+
+
+References
+----------
+
+.. [a] A. Miettinen, G. Lovric, E. Borisova, M. Stampanoni, Separable distributed local thickness algorithm for efficient morphological characterization of terabyte-scale volume images, in press, 2020.
+
+.. [b] T. Hildebrand and P. Ruegsegger, A new method for the model-independent assessment of thickness in three-dimensional images, Journal of Microscopy 185(1), 67–75, 1997.
+
+
+
+.. Use this if we add multiple pages
+
+	.. toctree::
+	   :maxdepth: 1
+	   :caption: Contents:
+	   :glob:
+
+	   *
