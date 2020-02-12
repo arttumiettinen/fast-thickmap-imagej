@@ -40,7 +40,7 @@ Installation
 Plain ImageJ
 ************
 
-Download the .jar file from `GitHub <https://github.com/arttumiettinen/fast-thickmap-imagej/releases>`__ into Plugins folder of your ImageJ installation.
+Download the latest .jar file from `GitHub <https://github.com/arttumiettinen/fast-thickmap-imagej/releases>`__ into Plugins folder of your ImageJ installation.
 Re-start ImageJ or use Help>Refresh menus command.
 The Fast thickmap plugin(s) are now installed into the Plugins>Fast thickmap submenu.
 
@@ -48,7 +48,7 @@ The Fast thickmap plugin(s) are now installed into the Plugins>Fast thickmap sub
 Fiji
 ****
 
-Enable update site XXX and perform update.
+Enable update site Fast thickmap (https://sites.imagej.net/AMiettinen/) and perform update.
 The Fast thickmap plugins will be installed into the Plugins>Fast thickmap submenu.
 
 
