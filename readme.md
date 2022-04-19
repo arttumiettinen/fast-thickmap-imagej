@@ -8,8 +8,8 @@ The algorithm used in the plugin is described in [1] and it improves on the perf
 Getting it
 ----------
 
-You can download the plugin from the GitHub Releases page, or use the Fiji update site
-https://sites.imagej.net/AMiettinen/
+You can download the plugin from the [GitHub Releases page](https://github.com/arttumiettinen/fast-thickmap-imagej/releases), or by enabling update site
+https://sites.imagej.net/AMiettinen/ in the Fiji Updater.
 
 
 Documentation
