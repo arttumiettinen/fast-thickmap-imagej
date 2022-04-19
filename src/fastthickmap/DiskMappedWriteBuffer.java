@@ -4,7 +4,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 
 /**
- * Disk-mapped bufffer that provides read and write access to the underlying data.
+ * Disk-mapped buffer that provides read and write access to the underlying data.
  * @author miettinen_a
  *
  */

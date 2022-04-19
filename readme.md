@@ -5,6 +5,13 @@ This repository contains the source code of the Fast Thickmap ImageJ/Fiji plugin
 The algorithm used in the plugin is described in [1] and it improves on the performance of the algoritm described in [2].
 
 
+Getting it
+----------
+
+You can download the plugin from the GitHub Releases page, or use the Fiji update site
+https://sites.imagej.net/AMiettinen/
+
+
 Documentation
 -------------
 
@@ -14,7 +21,9 @@ Documentation of the plugin can be found at [ReadTheDocs](https://fast-thickmap-
 Building
 --------
 
-Eclipse project files and a .jardesc file are provided along with the repository. Please use File->Import->General->Existing Projects into Workspace wizard to import the project to your Eclipse workspace.
+Eclipse project files and a .jardesc file are provided along with the repository. Please use "File->Import->General->Existing Projects into Workspace" wizard to import the project to your Eclipse workspace.
+
+Remember to compile for Java runtime that is compatible with ImageJ/Fiji!
 
 
 
