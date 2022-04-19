@@ -14,7 +14,7 @@ Documentation of the plugin can be found at [ReadTheDocs](https://fast-thickmap-
 Building
 --------
 
-Eclipse project files and a .jardesc file are provided along with the repository.
+Eclipse project files and a .jardesc file are provided along with the repository. Please use File->Import->General->Existing Projects into Workspace wizard to import the project to your Eclipse workspace.
 
 
 
