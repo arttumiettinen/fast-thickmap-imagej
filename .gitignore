@@ -1,3 +1,4 @@
 .settings
 plugins/*
 *.jdat
+/plugins/

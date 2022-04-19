@@ -27,8 +27,7 @@ public class Thickness_Map_ implements PlugInFilter {
 	public void run(ImageProcessor arg0) {
 		
 		boolean approximation = defaultIntApprox;
-
-		String tempDir = Squared_Distance_Ridge_To_Squared_Radius_Map_.getImageDirectory(iplus);
+		String tempDir = defaultTempDir;
 
 		if (iplus.isStack())
 			(new StackConverter(iplus)).convertToGray32();
@@ -72,18 +71,34 @@ public class Thickness_Map_ implements PlugInFilter {
 	}
 
 	static boolean defaultIntApprox = false;
+	static String defaultTempDir = "";
 	
 	@Override
 	public int setup(String arg0, ImagePlus img) {
 		
+		String tempDir = defaultTempDir;
+		if(tempDir == null || tempDir.isEmpty())
+			tempDir = Squared_Distance_Ridge_To_Squared_Radius_Map_.getImageDirectory(img);
+		
+		if (tempDir == null || tempDir.isEmpty())
+			tempDir = System.getProperty("java.io.tmpdir");
+		
 		GenericDialog dlg = new GenericDialog("Thickness map settings");
 		dlg.addCheckbox("Integer radius approximation", defaultIntApprox);
+		dlg.addDirectoryField("Temporary directory", tempDir);
+		dlg.addMessage("The temporary directory should be on a fast disk with plenty of free space.");
 		dlg.showDialog();
 		
 		if(dlg.wasCanceled())
 			return DONE;
 		
 		defaultIntApprox = dlg.getNextBoolean();
+		String newTempDir = dlg.getNextText();
+		
+		// Only save the directory choice if the user changed the directory from the default.
+		// If left to the default value (empty) the directory is updated for each image processed.
+		if(newTempDir != tempDir)
+			defaultTempDir = newTempDir;
 		
 		iplus = img;
 		return DOES_8G + DOES_16 + DOES_32;

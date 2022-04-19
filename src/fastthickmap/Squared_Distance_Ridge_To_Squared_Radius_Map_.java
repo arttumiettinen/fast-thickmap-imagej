@@ -18,6 +18,7 @@ import java.util.concurrent.atomic.DoubleAdder;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
+import ij.gui.GenericDialog;
 import ij.plugin.filter.PlugInFilter;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
@@ -1200,7 +1201,7 @@ public class Squared_Distance_Ridge_To_Squared_Radius_Map_ implements PlugInFilt
 	}
 
 	private ImagePlus iplus;
-
+	
 	@Override
 	public void run(ImageProcessor arg0) {
 		Image img = new Image(iplus.getStack());
@@ -1211,7 +1212,7 @@ public class Squared_Distance_Ridge_To_Squared_Radius_Map_ implements PlugInFilt
 			out.addSlice(new FloatProcessor(img.width(), img.height(), new float[img.width() * img.height()]));
 		Image outImg = new Image(out);
 
-		String tempDir = getImageDirectory(iplus);
+		String tempDir = defaultTempDir;
 
 		try {
 			thickmap2(img, outImg, tempDir);
@@ -1222,10 +1223,34 @@ public class Squared_Distance_Ridge_To_Squared_Radius_Map_ implements PlugInFilt
 			IJ.showMessage("I/O exception while saving or loading temporary data: " + e.getMessage());
 		}
 	}
+	
+	private static String defaultTempDir;
 
 	@Override
 	public int setup(String arg0, ImagePlus img) {
-
+		
+		String tempDir = defaultTempDir;
+		if(tempDir == null || tempDir.isEmpty())
+			tempDir = Squared_Distance_Ridge_To_Squared_Radius_Map_.getImageDirectory(img);
+		
+		if (tempDir == null || tempDir.isEmpty())
+			tempDir = System.getProperty("java.io.tmpdir");
+		
+		GenericDialog dlg = new GenericDialog("Thickness map settings");
+		dlg.addDirectoryField("Temporary directory", tempDir);
+		dlg.addMessage("The temporary directory should be on a fast disk with plenty of free space.");
+		dlg.showDialog();
+		
+		if(dlg.wasCanceled())
+			return DONE;
+		
+		String newTempDir = dlg.getNextText();
+		
+		// Only save the directory choice if the user changed the directory from the default.
+		// If left to the default value (empty) the directory is updated for each image processed.
+		if(newTempDir != tempDir)
+			defaultTempDir = newTempDir;
+		
 		iplus = img;
 		return DOES_32;
 
